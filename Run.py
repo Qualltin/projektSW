@@ -125,6 +125,7 @@ class FirmpageComments(Page):
                     comm = re.compile(r'[\xc2\xa3]').sub("GBP", comm)
                 #self.openFile()[1].writerow([comm])
                 self.openFile()[1].writerow([self.last_id, comm])
+                print("Zapisano wpis o ID: ", str(self.last_id))
                 self.last_id += 1
             except:
                 print("Niepoprawny wpis, pomijam.")
