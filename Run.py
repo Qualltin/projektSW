@@ -8,16 +8,20 @@ import csv
 import traceback
 
 # abstrakcyjna klasa Page utworzona po to, by nie powielać metody readUrl() w innych klasach
+
 class Page():
+
     def readUrl(self, www):
         try:
             return BeautifulSoup(urllib.request.urlopen(www).read())
-        except urllib.error.HTTPError as e:
-            return e
+        except:
+            return False
 
 # klasa Mainpage określa główną stronę badanej przez nas witryny
 # zawiera metodę getSubpages(), która zwraca listę adresów wszystkich podstron strony głównej
+
 class Mainpage(Page):
+
     url = "http://www.reviewcentre.com/products1034.html"
 
     def getSubpages(self):
@@ -33,7 +37,9 @@ class Mainpage(Page):
 # klasa Listpage określa każdą z podstron strony głównej
 # zawiera metodę getFirms(), która zwraca listę adresów stron tych firm,
 # które mają 50 lub więcej opinii na swój temat.
+
 class Listpage(Page):
+
     def __init__(self, start_urls):
         self.start_urls = start_urls
 
@@ -57,7 +63,9 @@ class Listpage(Page):
 
 # klasa Firmpage określa każdą ze stron danej firmy
 # zawiera metodę getSubpagesUrls(), która zwaraca listę wszystkich linków podstron z opiniami nt. danej firmy
+
 class Firmpage(Page):
+
     def __init__(self, url):
         self.url = url
 
@@ -85,7 +93,9 @@ class Firmpage(Page):
 # Klasa FirmpageComments określa stronę, na której znajdują się komentarze.
 # zawiera metodę readComments(), która pozwala odczytać wszystkie komentarze z danej strony
 # i zapisać je do pliku CSV wykorzystując pozostałe metody klasy.
+
 class FirmpageComments(Page):
+
     def __init__(self, url, last_id):
         self.url = url
         self.last_id = last_id
@@ -124,6 +134,9 @@ class FirmpageComments(Page):
         return self.last_id
 
 
+
+
+######################################### RUN ###############################################
 if __name__ == '__main__':
     mp = Mainpage()
     print(mp.getSubpages())
@@ -131,8 +144,14 @@ if __name__ == '__main__':
     print(spl.getFirms())
     id = 1
     for el in spl.getFirms():
-        pf = Firmpage(el)
-        pf.getSubpagesUrls()
-        for url in pf.getSubpagesUrls():
-            fpc = FirmpageComments(url, id)
-            id = fpc.readComments()
+        try:
+            pf = Firmpage(el)
+            pf.getSubpagesUrls()
+            for url in pf.getSubpagesUrls():
+                try:
+                    fpc = FirmpageComments(url, id)
+                    id = fpc.readComments()
+                except:
+                    print("Wystąpił problem z ", url)
+        except:
+            print("Wystąpił problem z ", el)
