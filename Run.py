@@ -1,25 +1,30 @@
 __author__ = 'Mateusz K.'
 
-# instalacja bs4 poprzez "pip install beautifulsoup4"
+"""
+    Instalacja bs4 poprzez "pip install beautifulsoup4"
+"""
 from bs4 import BeautifulSoup
 import urllib.request, urllib.error
 import re
 import csv
 import traceback
 
-# abstrakcyjna klasa Page utworzona po to, by nie powielać metody readUrl() w innych klasach
-
+"""
+    Abstrakcyjna klasa Page utworzona po to, by nie powielać metody readUrl() w innych klasach.
+"""
 class Page():
 
     def readUrl(self, www):
         try:
-            return BeautifulSoup(urllib.request.urlopen(www).read())
+            return BeautifulSoup(urllib.request.urlopen(www, timeout=10).read())
         except:
             return False
 
-# klasa Mainpage określa główną stronę badanej przez nas witryny
-# zawiera metodę getSubpages(), która zwraca listę adresów wszystkich podstron strony głównej
-
+"""
+    Klasa Mainpage określa główną stronę badanej przez nas witryny. Stąd "na stałę" zapisany adres głównej strony.
+    Zawiera metodę getSubpages(), która zwraca listę adresów wszystkich podstron strony głównej,
+    na której znajdują się sekcje dla każdej z firm.
+"""
 class Mainpage(Page):
 
     url = "http://www.reviewcentre.com/products1034.html"
@@ -34,10 +39,12 @@ class Mainpage(Page):
             num += 1
         return urls
 
-# klasa Listpage określa każdą z podstron strony głównej
-# zawiera metodę getFirms(), która zwraca listę adresów stron tych firm,
-# które mają 50 lub więcej opinii na swój temat.
-
+"""
+    Klasa Listpage określa każdą z podstron strony głównej, które pobrano metodą getSubpages() z Mainpage.
+    Zawiera metodę getFirms(), która zwraca listę adresów stron tych firm,
+    które mają 50 lub więcej opinii na swój temat (te z mniejszą ilością nie są dla nas wartościowe).
+    Metoda getSectionUrls() pobiera adres www danej firmy z sekcji, jest wykorzystywana przez getFirms().
+"""
 class Listpage(Page):
 
     def __init__(self, start_urls):
@@ -61,9 +68,10 @@ class Listpage(Page):
                     linki_firmy.append(x)
         return linki_firmy
 
-# klasa Firmpage określa każdą ze stron danej firmy
-# zawiera metodę getSubpagesUrls(), która zwaraca listę wszystkich linków podstron z opiniami nt. danej firmy
-
+"""
+    Klasa Firmpage określa każdą ze stron danej firmy pobranych metodą getFirms() z Listpage.
+    Zawiera metodę getSubpagesUrls(), która zwaraca listę wszystkich linków podstron z opiniami nt. danej firmy.
+"""
 class Firmpage(Page):
 
     def __init__(self, url):
@@ -90,10 +98,10 @@ class Firmpage(Page):
             print('wyjatek')
             return self.createUrls(self.url, link_podstr, "wyjatek", l_pdstr)
 
-# Klasa FirmpageComments określa stronę, na której znajdują się komentarze.
-# zawiera metodę readComments(), która pozwala odczytać wszystkie komentarze z danej strony
-# i zapisać je do pliku CSV wykorzystując pozostałe metody klasy.
-
+"""
+    Klasa FirmpageComments określa stronę, na której znajdują się komentarze dla konkretnej firmy.
+    Zawiera metodę readComments(), która pozwala odczytać wszystkie komentarze z danej strony i zapisać je do pliku CSV wykorzystując pozostałe metody klasy.
+"""
 class FirmpageComments(Page):
 
     def __init__(self, url, last_id):
@@ -136,18 +144,21 @@ class FirmpageComments(Page):
 
 
 
-
-######################################### RUN ###############################################
+"""
+    Koniec zapisu klas. Poniższy kod uruchamia program zapisujący komentarze do CSV.
+"""
 if __name__ == '__main__':
+    # Tworzenie instancji dla klasy Mainpage
     mp = Mainpage()
-    print(mp.getSubpages())
+    # Tworzenie instancji dla klasy Listpage z wykorzystaniem getSubpages() z Mainpage
     spl = Listpage(mp.getSubpages())
-    print(spl.getFirms())
     id = 1
+    # Pętla czytająca sekcje każdej firmy
     for el in spl.getFirms():
         try:
+            # Tworzenie instancji klasy Firmpage
             pf = Firmpage(el)
-            pf.getSubpagesUrls()
+            # Pętla czytająca każdą z podstron z komentarzami nt. danej firmy
             for url in pf.getSubpagesUrls():
                 try:
                     fpc = FirmpageComments(url, id)
@@ -156,3 +167,4 @@ if __name__ == '__main__':
                     print("Wystąpił problem z ", url)
         except:
             print("Wystąpił problem z ", el)
+    print("Program zakończył działanie!")
